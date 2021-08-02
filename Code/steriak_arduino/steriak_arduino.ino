@@ -23,7 +23,7 @@
 
 DHT HeatSensor(HEATSENSOR_PIN, DHT22);
 
-int timerDuration = 0, currentTimerDuration = 0, systemState = 0;
+int timerDuration = 0, currentTimerDuration = 0, systemState = 0, relayCheckInterval = 15;
 unsigned long startMillis, currentMillis;
 unsigned long runTime = 0;
 const unsigned long ONE_SEC = 1000;
@@ -303,52 +303,52 @@ void setupRelays() {
 */
 int relayConf10[RELAY_COUNT][41] = {
   {
-    0, 0, 0, 0, 0, 0, 0, 0, // 1st Relay 10:00 - 08:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 1st Relay 08:00 - 06:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 1st Relay 06:00 - 04:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 1st Relay 04:00 - 02:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 1st Relay 02:00 - 00:15
-    0                       // 1st Relay 00:15 - 00:00
+    1, 0, 1, 0, 1, 0, 1, 0, // 1st Relay 10:00 - 08:15
+    0, 1, 0, 1, 0, 1, 0, 1, // 1st Relay 08:00 - 06:15
+    1, 0, 1, 0, 1, 0, 1, 0, // 1st Relay 06:00 - 04:15
+    0, 1, 0, 1, 0, 1, 0, 1, // 1st Relay 04:00 - 02:15
+    1, 0, 1, 0, 1, 0, 1, 0, // 1st Relay 02:00 - 00:15
+    1                       // 1st Relay 00:15 - 00:00
   },
   {
-    0, 0, 0, 0, 0, 0, 0, 0, // 2nd Relay 10:00 - 08:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 2nd Relay 08:00 - 06:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 2nd Relay 06:00 - 04:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 2nd Relay 04:00 - 02:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 2nd Relay 02:00 - 00:15
-    0                       // 2nd Relay 00:15 - 00:00
+    1, 0, 1, 0, 1, 0, 1, 0, // 2nd Relay 10:00 - 08:15
+    0, 1, 0, 1, 0, 1, 0, 1, // 2nd Relay 08:00 - 06:15
+    1, 0, 1, 0, 1, 0, 1, 0, // 2nd Relay 06:00 - 04:15
+    0, 1, 0, 1, 0, 1, 0, 1, // 2nd Relay 04:00 - 02:15
+    1, 0, 1, 0, 1, 0, 1, 0, // 2nd Relay 02:00 - 00:15
+    1                       // 2nd Relay 00:15 - 00:00
   },
   {
-    0, 0, 0, 0, 0, 0, 0, 0, // 3rd Relay 10:00 - 08:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 3rd Relay 08:00 - 06:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 3rd Relay 06:00 - 04:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 3rd Relay 04:00 - 02:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 3rd Relay 02:00 - 00:15
-    0                       // 3rd Relay 00:15 - 00:00
+    1, 0, 1, 0, 1, 0, 1, 0, // 3rd Relay 10:00 - 08:15
+    0, 1, 0, 1, 0, 1, 0, 1, // 3rd Relay 08:00 - 06:15
+    1, 0, 1, 0, 1, 0, 1, 0, // 3rd Relay 06:00 - 04:15
+    0, 1, 0, 1, 0, 1, 0, 1, // 3rd Relay 04:00 - 02:15
+    1, 0, 1, 0, 1, 0, 1, 0, // 3rd Relay 02:00 - 00:15
+    1                       // 3rd Relay 00:15 - 00:00
   },
   {
-    0, 0, 0, 0, 0, 0, 0, 0, // 4th Relay 10:00 - 08:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 4th Relay 08:00 - 06:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 4th Relay 06:00 - 04:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 4th Relay 04:00 - 02:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 4th Relay 02:00 - 00:15
-    0                       // 4th Relay 00:15 - 00:00
+    1, 0, 1, 0, 1, 0, 1, 0, // 4th Relay 10:00 - 08:15
+    0, 1, 0, 1, 0, 1, 0, 1, // 4th Relay 08:00 - 06:15
+    1, 0, 1, 0, 1, 0, 1, 0, // 4th Relay 06:00 - 04:15
+    0, 1, 0, 1, 0, 1, 0, 1, // 4th Relay 04:00 - 02:15
+    1, 0, 1, 0, 1, 0, 1, 0, // 4th Relay 02:00 - 00:15
+    1                       // 4th Relay 00:15 - 00:00
   },
   {
-    0, 0, 0, 0, 0, 0, 0, 0, // 5th Relay 10:00 - 08:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 5th Relay 08:00 - 06:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 5th Relay 06:00 - 04:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 5th Relay 04:00 - 02:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 5th Relay 02:00 - 00:15
-    0                       // 5th Relay 00:15 - 00:00
+    1, 0, 1, 0, 1, 0, 1, 0, // 5th Relay 10:00 - 08:15
+    0, 1, 0, 1, 0, 1, 0, 1, // 5th Relay 08:00 - 06:15
+    1, 0, 1, 0, 1, 0, 1, 0, // 5th Relay 06:00 - 04:15
+    0, 1, 0, 1, 0, 1, 0, 1, // 5th Relay 04:00 - 02:15
+    1, 0, 1, 0, 1, 0, 1, 0, // 5th Relay 02:00 - 00:15
+    1                       // 5th Relay 00:15 - 00:00
   },
   {
-    0, 0, 0, 0, 0, 0, 0, 0, // 6th Relay 10:00 - 08:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 6th Relay 08:00 - 06:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 6th Relay 06:00 - 04:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 6th Relay 04:00 - 02:15
-    0, 0, 0, 0, 0, 0, 0, 0, // 6th Relay 02:00 - 00:15
-    0                       // 6th Relay 00:15 - 00:00
+    1, 0, 1, 0, 1, 0, 1, 0, // 6th Relay 10:00 - 08:15
+    0, 1, 0, 1, 0, 1, 0, 1, // 6th Relay 08:00 - 06:15
+    1, 0, 1, 0, 1, 0, 1, 0, // 6th Relay 06:00 - 04:15
+    0, 1, 0, 1, 0, 1, 0, 1, // 6th Relay 04:00 - 02:15
+    1, 0, 1, 0, 1, 0, 1, 0, // 6th Relay 02:00 - 00:15
+    1                       // 6th Relay 00:15 - 00:00
   },
 };
 
@@ -669,36 +669,30 @@ void checkRelays() {
     disableRelays();
   }
 
-  int currentInterval = ((timerDuration * 60) - currentTimerDuration) / (timerDuration * 4);
+  int currentInterval = ((timerDuration * 60) - currentTimerDuration) / relayCheckInterval;
   int relayOrder = 0;
   if (timerDuration == 10) {
     for( relayOrder = 0; relayOrder < RELAY_COUNT; relayOrder++) {
       if (relayConf10[relayOrder][currentInterval]) {
-        // pinMode(RELAY_PINS[relayOrder], OUTPUT);
         digitalWrite(RELAY_PINS[relayOrder], HIGH);
       } else {
         digitalWrite(RELAY_PINS[relayOrder], LOW);
-        // pinMode(RELAY_PINS[relayOrder], INPUT);
       }
     }
   } else if (timerDuration == 30) {
     for( relayOrder = 0; relayOrder < RELAY_COUNT; relayOrder++) {
       if (relayConf30[relayOrder][currentInterval]) {
-        // pinMode(RELAY_PINS[relayOrder], OUTPUT);
         digitalWrite(RELAY_PINS[relayOrder], HIGH);
       } else {
         digitalWrite(RELAY_PINS[relayOrder], LOW);
-        // pinMode(RELAY_PINS[relayOrder], INPUT);
       }
     }
   } else if (timerDuration == 60) {
     for( relayOrder = 0; relayOrder < RELAY_COUNT; relayOrder++) {
       if (relayConf60[relayOrder][currentInterval]) {
-        // pinMode(RELAY_PINS[relayOrder], OUTPUT);
         digitalWrite(RELAY_PINS[relayOrder], HIGH);
       } else {
         digitalWrite(RELAY_PINS[relayOrder], LOW);
-        // pinMode(RELAY_PINS[relayOrder], INPUT);
       }
     }
   } else {
