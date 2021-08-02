@@ -261,12 +261,6 @@ int RELAY_PINS[RELAY_COUNT] = {
   RELAY5_PIN,
   RELAY6_PIN,
 };
-void setupRelays() {
-  for ( int relayIndex = 0; relayIndex < RELAY_COUNT; relayIndex++) {
-    pinMode(RELAY_PINS[relayIndex], OUTPUT);
-    digitalWrite(RELAY_PINS[relayIndex], LOW);
-  }
-}
 /*
 30:00 29:45 29:30 29:15 29:00 28:45 28:30 28:15
   0  ,  0  ,  0  ,  0  ,  0  ,  0  ,  0  ,  0
@@ -664,6 +658,13 @@ int relayConf60[RELAY_COUNT][241] = {
   }
 };
 
+void setupRelays() {
+  for ( int relayIndex = 0; relayIndex < RELAY_COUNT; relayIndex++) {
+    pinMode(RELAY_PINS[relayIndex], OUTPUT);
+    digitalWrite(RELAY_PINS[relayIndex], LOW);
+  }
+}
+
 void checkRelays() {
   if (systemState != 1) {
     disableRelays();
@@ -701,8 +702,9 @@ void checkRelays() {
 }
 
 void disableRelays() {
-  for ( int relayOrder = 0; relayOrder < 5; relayOrder++ ) {
-    pinMode(RELAY_PINS[relayOrder], INPUT);
+  for ( int relayIndex = 0; relayIndex < RELAY_COUNT; relayIndex++) {
+    digitalWrite(RELAY_PINS[relayIndex], LOW);
+    pinMode(RELAY_PINS[relayIndex], INPUT);
   }
 }
 /*--------------------------------------------------------------
