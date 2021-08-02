@@ -669,7 +669,7 @@ void checkRelays() {
     disableRelays();
   }
 
-  int currentInterval = ((timeDuration * 60) - currentTimerDuration) / (timerDuration * 4);
+  int currentInterval = ((timerDuration * 60) - currentTimerDuration) / (timerDuration * 4);
   int relayOrder = 0;
   if (timerDuration == 10) {
     for( relayOrder = 0; relayOrder < RELAY_COUNT; relayOrder++) {
