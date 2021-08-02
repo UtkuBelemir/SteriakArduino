@@ -142,6 +142,7 @@ void completeBtnPushCallback(void *ptr) {
 void setup() {
   Serial.begin(9600);
   nexInit();
+  setupRelays();
   delay(500);
   sendToNextion("initText.txt=","\"Initializing O3 Sensor...\"");
   initializeMQ131();
@@ -260,6 +261,12 @@ int RELAY_PINS[RELAY_COUNT] = {
   RELAY5_PIN,
   RELAY6_PIN,
 };
+void setupRelays() {
+  for ( int relayIndex = 0; relayIndex < RELAY_COUNT; relayIndex++) {
+    pinMode(RELAY_PINS[relayIndex], OUTPUT);
+    digitalWrite(RELAY_PINS[relayIndex], LOW);
+  }
+}
 /*
 30:00 29:45 29:30 29:15 29:00 28:45 28:30 28:15
   0  ,  0  ,  0  ,  0  ,  0  ,  0  ,  0  ,  0
@@ -667,25 +674,31 @@ void checkRelays() {
   if (timerDuration == 10) {
     for( relayOrder = 0; relayOrder < RELAY_COUNT; relayOrder++) {
       if (relayConf10[relayOrder][currentInterval]) {
-        pinMode(RELAY_PINS[relayOrder], OUTPUT);
+        // pinMode(RELAY_PINS[relayOrder], OUTPUT);
+        digitalWrite(RELAY_PINS[relayOrder], HIGH);
       } else {
-        pinMode(RELAY_PINS[relayOrder], INPUT);
+        digitalWrite(RELAY_PINS[relayOrder], LOW);
+        // pinMode(RELAY_PINS[relayOrder], INPUT);
       }
     }
   } else if (timerDuration == 30) {
     for( relayOrder = 0; relayOrder < RELAY_COUNT; relayOrder++) {
       if (relayConf30[relayOrder][currentInterval]) {
-        pinMode(RELAY_PINS[relayOrder], OUTPUT);
+        // pinMode(RELAY_PINS[relayOrder], OUTPUT);
+        digitalWrite(RELAY_PINS[relayOrder], HIGH);
       } else {
-        pinMode(RELAY_PINS[relayOrder], INPUT);
+        digitalWrite(RELAY_PINS[relayOrder], LOW);
+        // pinMode(RELAY_PINS[relayOrder], INPUT);
       }
     }
   } else if (timerDuration == 60) {
     for( relayOrder = 0; relayOrder < RELAY_COUNT; relayOrder++) {
       if (relayConf60[relayOrder][currentInterval]) {
-        pinMode(RELAY_PINS[relayOrder], OUTPUT);
+        // pinMode(RELAY_PINS[relayOrder], OUTPUT);
+        digitalWrite(RELAY_PINS[relayOrder], HIGH);
       } else {
-        pinMode(RELAY_PINS[relayOrder], INPUT);
+        digitalWrite(RELAY_PINS[relayOrder], LOW);
+        // pinMode(RELAY_PINS[relayOrder], INPUT);
       }
     }
   } else {
