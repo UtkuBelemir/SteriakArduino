@@ -194,7 +194,7 @@ void finishSterilizing() {
 
 void setMeasurementVals() {
   if (!isnan(temperatureValue) && !isnan(humidityValue)) {
-   MQ131.setEnv(temperatureValue, humidityValue); 
+   MQ131.setEnv(temperatureValue, humidityValue);
   }
   setTemperatureText();
   setHumidityText();
@@ -202,12 +202,12 @@ void setMeasurementVals() {
 }
 
 /*--------------------------------------------------------------
- _    _            _    _____                           
-| |  | |          | |  / ____|                          
-| |__| | ___  __ _| |_| (___   ___ _ __  ___  ___  _ __ 
+ _    _            _    _____
+| |  | |          | |  / ____|
+| |__| | ___  __ _| |_| (___   ___ _ __  ___  ___  _ __
 |  __  |/ _ \/ _` | __|\___ \ / _ \ '_ \/ __|/ _ \| '__|
-| |  | |  __/ (_| | |_ ____) |  __/ | | \__ \ (_) | |   
-|_|  |_|\___|\__,_|\__|_____/ \___|_| |_|___/\___/|_|   
+| |  | |  __/ (_| | |_ ____) |  __/ | | \__ \ (_) | |
+|_|  |_|\___|\__,_|\__|_____/ \___|_| |_|___/\___/|_|
 --------------------------------------------------------------*/
 void initializeHeatSensor() {
   HeatSensor.begin();
@@ -244,14 +244,14 @@ void setHumidityText() {
   MS_humidityLast = currentMillis;
 }
 /*--------------------------------------------------------------
-______     _             
-| ___ \   | |            
-| |_/ /___| | __ _ _   _ 
+______     _
+| ___ \   | |
+| |_/ /___| | __ _ _   _
 |    // _ \ |/ _` | | | |
 | |\ \  __/ | (_| | |_| |
 \_| \_\___|_|\__,_|\__, |
                     __/ |
-                   |___/ 
+                   |___/
 --------------------------------------------------------------*/
 int RELAY_PINS[RELAY_COUNT] = {
   RELAY1_PIN,
@@ -491,7 +491,7 @@ int relayConf60[RELAY_COUNT][241] = {
     0, 0, 0, 0, 0, 0, 0, 0, // 1st Relay 02:00 - 00:15
     0                       // 1st Relay 00:15 - 00:00
   },
-  { 
+  {
     0, 0, 0, 0, 0, 0, 0, 0, // 2nd Relay 60:00 - 58:15
     0, 0, 0, 0, 0, 0, 0, 0, // 2nd Relay 58:00 - 56:15
     0, 0, 0, 0, 0, 0, 0, 0, // 2nd Relay 56:00 - 54:15
@@ -524,7 +524,7 @@ int relayConf60[RELAY_COUNT][241] = {
     0, 0, 0, 0, 0, 0, 0, 0, // 2nd Relay 02:00 - 00:15
     0                       // 2nd Relay 00:15 - 00:00
   },
-  { 
+  {
     0, 0, 0, 0, 0, 0, 0, 0, // 3rd Relay 60:00 - 58:15
     0, 0, 0, 0, 0, 0, 0, 0, // 3rd Relay 58:00 - 56:15
     0, 0, 0, 0, 0, 0, 0, 0, // 3rd Relay 56:00 - 54:15
@@ -704,11 +704,11 @@ void checkRelays() {
 void disableRelays() {
   for ( int relayIndex = 0; relayIndex < RELAY_COUNT; relayIndex++) {
     digitalWrite(RELAY_PINS[relayIndex], LOW);
-    pinMode(RELAY_PINS[relayIndex], INPUT);
+    // pinMode(RELAY_PINS[relayIndex], INPUT);
   }
 }
 /*--------------------------------------------------------------
- __  __  ____        __ ____  __ 
+ __  __  ____        __ ____  __
 |  \/  |/ __ \      /_ |___ \/_ |
 | \  / | |  | |______| | __) || |
 | |\/| | |  | |______| ||__ < | |
