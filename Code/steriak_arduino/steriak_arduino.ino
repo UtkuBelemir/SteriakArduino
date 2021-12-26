@@ -352,7 +352,7 @@ void runAbortBtn_Callback(void *ptr) {
 } */
 
 void runHomeBtn_Callback(void *ptr) {
-  runTimeTotalMins = timerDuration - (currentTimerDuration / 60);
+  runTimeTotalMins = runTimeTotalMins + (timerDuration - (currentTimerDuration / 60));
   updateInitialPageGlobals();
   currentTimerDuration = 0;
   setTotalRunMins(runTimeTotalMins);
