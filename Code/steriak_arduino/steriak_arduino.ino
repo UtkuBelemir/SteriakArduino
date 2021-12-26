@@ -1,6 +1,7 @@
 #include <RTClib.h>
 #include <Nextion.h>
 #include <NexButton.h>
+#include <NexText.h>
 
 #define RELAY_NEGION 7
 #define RELAY_OZONE 6
@@ -19,6 +20,7 @@
 #define PAGEID_STERILI 7
 #define PAGEID_STARTING 8
 #define PAGEID_RUNNING 9
+#define PAGEID_CLOCKSETTINGS 10
 
 #define SYSTEM_IDLE 0
 #define SYSTEM_RUNNING 1
@@ -37,6 +39,22 @@
 */
 
 RTC_DS3231 permanentClock;
+void adjustTime(int hour, int min);
+
+String monthNumToStr[12] = {
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec"
+};
 
 int timerDuration = 0, systemState = SYSTEM_IDLE, relayCheckInterval = 60, relayCheckInterval2 = 15, currentPageID = PAGEID_INTRO;
 unsigned long currentTimerDuration = 0;
@@ -84,6 +102,14 @@ NexButton startStartBtn = NexButton(8, 2, "startStartBtn");
 NexButton runAbortBtn = NexButton(9, 11, "runAbortBtn");
 NexButton runCompleteBtn = NexButton(9, 9, "runCompleteBtn");
 NexButton runHomeBtn = NexButton(9, 10, "runHomeBtn");
+NexButton clckSaveBtn = NexButton(10, 11, "clckSaveBtn");
+NexButton clckCancelBtn = NexButton(10, 12, "clckCancelBtn");
+
+NexText clckHour1 = NexText(10, 14, "hour1");
+NexText clckHour2 = NexText(10, 15, "hour2");
+NexText clckMin1 = NexText(10, 16, "min1");
+NexText clckMin2 = NexText(10, 17, "min2");
+
 
 NexTouch *nex_listen_list[] = {
   &slctCycleBtn,
@@ -113,6 +139,12 @@ NexTouch *nex_listen_list[] = {
   &runAbortBtn,
   &runCompleteBtn,
   &runHomeBtn,
+  &clckHour1,
+  &clckHour2,
+  &clckMin1,
+  &clckMin2,
+  &clckSaveBtn,
+  &clckCancelBtn,
   NULL
 };
 
@@ -197,7 +229,34 @@ void mnHomeBtn_Callback(void *ptr) {
 }
 
 void setTIMEBtn_Callback(void *ptr) {
-  // TODO
+  sendToNextion("clckSetPage.hour1.txt=", "\"" + String(((int) (clck_getHour()/10))) + "\"");
+  sendToNextion("clckSetPage.hour2.txt=", "\"" + String(clck_getHour() % 10) + "\"");
+  sendToNextion("clckSetPage.min1.txt=", "\"" + String(((int) (clck_getMin()/10))) + "\"");
+  sendToNextion("clckSetPage.min2.txt=", "\"" + String(clck_getMin() % 10) + "\"");
+  updateCurrentPageID(PAGEID_CLOCKSETTINGS);
+  sendToNextion("page clckSetPage", "");
+}
+
+void clckSaveBtn_Callback(void *ptr) {
+  char hr1 = '0';
+  char hr2 = '0'; 
+  char mn1 = '0';
+  char mn2 = '0';
+  clckHour1.getText(&hr1, 1);
+  clckHour2.getText(&hr2, 1);
+  clckMin1.getText(&mn1, 1);
+  clckMin2.getText(&mn2, 1);
+  String hours = String(hr1) + String(hr2);
+  String mins = String(mn1) + String(mn2);
+  adjustTime(hours.toInt(),mins.toInt());
+  updateInitialPageGlobals();
+  updateCurrentPageID(PAGEID_INITAL);
+  sendToNextion("page initialPage", "");
+}
+
+void clckCancelBtn_Callback(void *ptr) {
+  updateCurrentPageID(PAGEID_SETTINGS);
+  sendToNextion("page settingsPage", "");
 }
 
 void setLNGBtn_Callback(void *ptr) {
@@ -296,6 +355,7 @@ void runHomeBtn_Callback(void *ptr) {
   sendToNextion("page initialPage", "");
 }
 
+
 /* void drSelectBtnPushCallback(void *ptr) {
   currentTimerDuration = timerDuration * 60;
   systemState = 0;
@@ -374,6 +434,8 @@ void attachButtons() {
   runAbortBtn.attachPush(runAbortBtn_Callback, &runAbortBtn);
   runCompleteBtn.attachPush(runHomeBtn_Callback, &runCompleteBtn);
   runHomeBtn.attachPush(runHomeBtn_Callback, &runHomeBtn);
+  clckSaveBtn.attachPush(clckSaveBtn_Callback, &clckSaveBtn);
+  clckCancelBtn.attachPush(clckCancelBtn_Callback, &clckCancelBtn);
 }
 
 void setup() {
@@ -390,6 +452,7 @@ void setup() {
   sendToNextion("introText.txt=","\"System Clock initialized!\"");
   sendToNextion("introText.txt=","\"Initializing Screen Components...\"");
   attachButtons();
+  updateInitialPageGlobals();
   sendToNextion("introText.txt=","\"Initialization Done. Starting...\"");
   delay(500);
   updateCurrentPageID(PAGEID_INITAL);
@@ -422,8 +485,8 @@ void updateNextionTimer() {
 }
 
 void updateInitialPageGlobals() {
-  sendToNextion("dstClock.txt=","\"11:00\"");
-  sendToNextion("dstDate.txt=","\"12 Nis 1996\"");
+  setDSTClock();
+  setDSTDate();
   sendToNextion("runtimeHr.txt", "\"00001\"");
   sendToNextion("runtimeMin.txt", "\"01\"");
 }
@@ -878,25 +941,66 @@ void disableRelays() {
  \_____|_|\___/ \___|_|\_\
 --------------------------------------------------------------*/
 void initializeClock() {
-  // permanentClock.begin();
-  // adjustTime();
-  // permanentClock.disable32K();
+  permanentClock.begin();
+  // adjustDate(2021, 12, 25);
+  // adjustTime(21, 1);
+  permanentClock.disable32K();
 }
 
-void adjustTime() {
-  permanentClock.adjust(DateTime(F(__DATE__), F(__TIME__)));
+void adjustTime(int hour, int min) {
+  char monthAndYear[7];
+  sprintf(monthAndYear, "%02d %04d", clck_getDay(), clck_getYear());
+  String tempStr = monthNumToStr[clck_getMonth() - 1] + " " + String(monthAndYear);
+  char dateStr[12];
+  tempStr.toCharArray(dateStr, 12);
+  char timeStr[8];
+  sprintf(timeStr, "%02d:%02d:00", hour, min);
+  permanentClock.adjust(DateTime(dateStr, timeStr));
 }
 
-String getDate() {
+void adjustDate(int year, int month, int day) {
+  char monthAndYear[7];
+  sprintf(monthAndYear, "%02d %04d", day, year);
+  String tempStr = monthNumToStr[month - 1] + " " + String(monthAndYear);
+  char dateStr[12];
+  tempStr.toCharArray(dateStr, 12);
+  char timeStr[8];
+  sprintf(timeStr, "%02d:%02d:%02d", clck_getHour(), clck_getMin(), clck_getSec());
+  permanentClock.adjust(DateTime(dateStr, timeStr));
+}
+
+uint16_t clck_getYear() {
   DateTime tempNow = permanentClock.now();
-  char result[10];
-  sprintf(result, "%04d-%02d-%02d", tempNow.year(), tempNow.month(), tempNow.day());
-  return String(result);
+  return tempNow.year();
+}
+uint8_t clck_getMonth() {
+  DateTime tempNow = permanentClock.now();
+  return tempNow.month();
+}
+uint8_t clck_getDay() {
+  DateTime tempNow = permanentClock.now();
+  return tempNow.day();
+}
+uint8_t clck_getHour() {
+  DateTime tempNow = permanentClock.now();
+  return tempNow.hour();
+}
+uint8_t clck_getMin() {
+  DateTime tempNow = permanentClock.now();
+  return tempNow.minute();
+}
+uint8_t clck_getSec() {
+  DateTime tempNow = permanentClock.now();
+  return tempNow.second();
 }
 
-String getTime() {
-  DateTime tempNow = permanentClock.now();
-  char result[10];
-  sprintf(result, "%02d:%02d", tempNow.hour(), tempNow.minute());
-  return String(result);
+void setDSTClock() {
+  char hourStr[8];
+  sprintf(hourStr, "%02d:%02d", clck_getHour(), clck_getMin());
+  sendToNextion("initialPage.dstClock.txt=","\"" + String(hourStr) + "\"");
+}
+
+void setDSTDate() {
+  String hourStr = String(clck_getDay()) + " " + monthNumToStr[clck_getMonth() - 1] + " " + String(clck_getYear());
+  sendToNextion("initialPage.dstDate.txt=","\"" + hourStr + "\"");
 }
