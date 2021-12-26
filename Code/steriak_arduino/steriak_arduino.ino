@@ -2,6 +2,7 @@
 #include <Nextion.h>
 #include <NexButton.h>
 #include <NexText.h>
+#include <EEPROM.h>
 
 #define RELAY_NEGION 7
 #define RELAY_OZONE 6
@@ -32,6 +33,8 @@
 // #define BUZZER_PIN 9
 #define BUZZER_NOTE 440
 
+#define EEPROM_TOTAL_MINS_ADDR 0
+
 /*
 - 5 nolu Ses rölesi start a, cancel e dokununca 3 saniye açacak, bir de her döngü bittiğinde 8 saniye açacak.
 - 6. Kapatma rölesi : döngü bittiğinde, ekrana dokunulmadığı sürece 15 dakika sayıp 1-2 saniye açacak darbe akım şalterine sinyal göndererek, sistemi kapatacak. yani bir nevi otomatik kapama yapacak. bu konuyla ilgili konuşalım.
@@ -58,8 +61,8 @@ String monthNumToStr[12] = {
 
 int timerDuration = 0, systemState = SYSTEM_IDLE, relayCheckInterval = 60, relayCheckInterval2 = 15, currentPageID = PAGEID_INTRO;
 unsigned long currentTimerDuration = 0;
-unsigned long startMillis, currentMillis;
-unsigned long runTime = 0;
+unsigned long startMillis, currentMillis, startedAt;
+long runTimeTotalMins = 0;
 const unsigned long ONE_SEC = 1000;
 const unsigned long ONE_MIN = ONE_SEC*60;
 unsigned long MS_buzzer;
@@ -238,10 +241,7 @@ void setTIMEBtn_Callback(void *ptr) {
 }
 
 void clckSaveBtn_Callback(void *ptr) {
-  char hr1 = '0';
-  char hr2 = '0'; 
-  char mn1 = '0';
-  char mn2 = '0';
+  char hr1 = '0', hr2 = '0', mn1 = '0', mn2 = '0';
   clckHour1.getText(&hr1, 1);
   clckHour2.getText(&hr2, 1);
   clckMin1.getText(&mn1, 1);
@@ -315,6 +315,7 @@ void sterBackBtn_Callback(void *ptr) {
 void startStartBtn_Callback(void *ptr) {
   updateCurrentPageID(PAGEID_RUNNING);
   updateNextionTimer();
+  startedAt = currentMillis;
   sendToNextion("runningPage.runTxt1.txt=", "\"The cycle continues\"");
   sendToNextion("runningPage.runTxt2.txt=", "\"Do not open the cover and\"");
   sendToNextion("runningPage.runTxt3.txt=", "\"do not cancel unless its an emergency.\"");
@@ -323,6 +324,7 @@ void startStartBtn_Callback(void *ptr) {
   sendToNextion("vis runCompleteBtn,0", "");
   sendToNextion("vis runHomeBtn,0", "");
   systemState = SYSTEM_RUNNING;
+
 }
 
 void startBackBtn_Callback(void *ptr) {
@@ -350,7 +352,10 @@ void runAbortBtn_Callback(void *ptr) {
 } */
 
 void runHomeBtn_Callback(void *ptr) {
+  runTimeTotalMins = timerDuration - (currentTimerDuration / 60);
+  updateInitialPageGlobals();
   currentTimerDuration = 0;
+  setTotalRunMins(runTimeTotalMins);
   updateCurrentPageID(PAGEID_INITAL);
   sendToNextion("page initialPage", "");
 }
@@ -442,6 +447,7 @@ void setup() {
   Serial.begin(9600);
   Serial2.begin(9600);
   nexInit();
+  initializeEEPROM();
   sendToNextion("introText.txt=","\"Initializing Relays...\"");
   setupRelays();
   delay(500);
@@ -487,8 +493,7 @@ void updateNextionTimer() {
 void updateInitialPageGlobals() {
   setDSTClock();
   setDSTDate();
-  sendToNextion("runtimeHr.txt", "\"00001\"");
-  sendToNextion("runtimeMin.txt", "\"01\"");
+  setTotalCounter();
 }
 
 void finishSterilizing() {
@@ -507,15 +512,12 @@ void finishSterilizing() {
 }
 
 
-/*--------------------------------------------------------------
-______     _
-| ___ \   | |
-| |_/ /___| | __ _ _   _
-|    // _ \ |/ _` | | | |
-| |\ \  __/ | (_| | |_| |
-\_| \_\___|_|\__,_|\__, |
-                    __/ |
-                   |___/
+/*---Section: Relay--------------------------------------------
+ ___       _
+| . \ ___ | | ___  _ _
+|   // ._]| |[_] || | |
+|_\_\\___.|_|[___| \  |
+                   [__/
 --------------------------------------------------------------*/
 int RELAY_PINS[PROG_RELAY_COUNT] = {
   RELAY_NEGION,
@@ -933,12 +935,10 @@ void disableRelays() {
 }
 
 /*---Section: Clock--------------------------------------------
-  _____ _            _
- / ____| |          | |
-| |    | | ___   ___| | __
-| |    | |/ _ \ / __| |/ /
-| |____| | (_) | (__|   <
- \_____|_|\___/ \___|_|\_\
+  ___  _           _
+ / __|| | ___  __ | |__
+| (__ | |/ _ \/ _|| / /
+ \___||_|\___/\__||_\_\
 --------------------------------------------------------------*/
 void initializeClock() {
   permanentClock.begin();
@@ -1003,4 +1003,48 @@ void setDSTClock() {
 void setDSTDate() {
   String hourStr = String(clck_getDay()) + " " + monthNumToStr[clck_getMonth() - 1] + " " + String(clck_getYear());
   sendToNextion("initialPage.dstDate.txt=","\"" + hourStr + "\"");
+}
+/*---Section: EEPROM--------------------------------------------
+ ___  ___  ___  ___   ___   __  __
+| __|| __|| _ \| _ \ / _ \ |  \/  |
+| _| | _| |  _/|   /| (_) || |\/| |
+|___||___||_|  |_|_\ \___/ |_|  |_|
+--------------------------------------------------------------*/
+void initializeEEPROM() {
+  runTimeTotalMins = getTotalRunMins();
+}
+long getTotalRunMins() {
+  long mins = readFromEEPROM(EEPROM_TOTAL_MINS_ADDR);
+  if (mins < 0) {
+    mins = 0;
+  }
+  return mins;
+}
+
+void setTotalRunMins(long mins) {
+  writeToEEPROM(EEPROM_TOTAL_MINS_ADDR, mins);
+}
+
+void writeToEEPROM(int address, long number)
+{
+  EEPROM.update(address, (number >> 24) & 0xFF);
+  EEPROM.update(address + 1, (number >> 16) & 0xFF);
+  EEPROM.update(address + 2, (number >> 8) & 0xFF);
+  EEPROM.update(address + 3, number & 0xFF);
+}
+
+long readFromEEPROM(int address)
+{
+  return ((long)EEPROM.read(address) << 24) +
+         ((long)EEPROM.read(address + 1) << 16) +
+         ((long)EEPROM.read(address + 2) << 8) +
+         (long)EEPROM.read(address + 3);
+}
+void setTotalCounter() {
+  char totHour[6];
+  char totMin[3];
+  sprintf(totHour, "%05ld", (runTimeTotalMins / 60));
+  sprintf(totMin, "%02ld", (runTimeTotalMins % 60));
+  sendToNextion("initialPage.runtimeHr.txt=", "\"" + String(totHour) + "\"");
+  sendToNextion("initialPage.runtimeMin.txt=", "\"" + String(totMin) + "\"");
 }
